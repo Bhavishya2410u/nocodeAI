@@ -102,37 +102,8 @@ const App: React.FC = () => {
 
   const handleMoveComponent = useCallback((dragId: string, dropTarget: { parentId: string | null; index: number }) => {
     let componentToMove: CanvasComponent | null = null;
-    
-    const findAndRemove = (comps: CanvasComponent[], id: string): CanvasComponent[] => {
-        let found = false;
-        const filtered = comps.filter(c => {
-            if (c.id === id) {
-                componentToMove = c;
-                found = true;
-                return false;
-            }
-            return true;
-        });
-        if (found) return filtered;
-
-        return comps.map(c => {
-            if (c.children) {
-                const newChildren = findAndRemove(c.children, id);
-                if (newChildren.length !== c.children.length) {
-                    found = true; // Component was found and removed in a nested level
-                }
-                return { ...c, children: newChildren };
-            }
-            return c;
-        });
-    };
-    
     let cleanedTree = [...components];
-    
-    // This part is tricky because a global `found` flag doesn't work well with recursion returning new arrays.
-    // A simpler way is to compare tree lengths, but that's also not robust for deep trees.
-    // The current findAndRemove has a potential issue if the component isn't found at one level, it continues searching siblings.
-    // Let's refactor findAndRemove to be more explicit.
+
     const findAndRemoveRobust = (comps: CanvasComponent[], id: string): { newComps: CanvasComponent[], foundComp: CanvasComponent | null } => {
         for (let i = 0; i < comps.length; i++) {
             const comp = comps[i];

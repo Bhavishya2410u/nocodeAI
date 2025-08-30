@@ -1,3 +1,4 @@
+
 import React, { useState, Fragment } from 'react';
 import type { CanvasComponent, HeaderProps, TextProps, ImageProps, ButtonProps, InputProps, FlexContainerProps, SpacingProps, LayoutProps, DividerProps, Viewport, Responsive } from '../types';
 import { ComponentType } from '../types';
@@ -223,10 +224,10 @@ const ResponsiveInputField = <T extends string | number>({ label, value, onChang
   );
 };
 
-const NonResponsiveInputField: React.FC<{ label: string; value: any; onChange: (val: any) => void; type?: string, placeholder?: string }> = ({ label, value, onChange, type = "text", placeholder }) => (
+const NonResponsiveInputField: React.FC<{ label: string; value: any; onChange: (val: any) => void; type?: string, placeholder?: string, onPaste?: (e: React.ClipboardEvent<HTMLInputElement>) => void }> = ({ label, value, onChange, type = "text", placeholder, onPaste }) => (
     <div>
       <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
-      <input type={type} value={value} onChange={e => onChange(type === 'number' ? Number(e.target.value) : e.target.value)} placeholder={placeholder} className="w-full p-2 bg-surface-accent border border-border rounded-lg text-text-primary focus:ring-2 focus:ring-primary focus:outline-none" />
+      <input type={type} value={value} onChange={e => onChange(type === 'number' ? Number(e.target.value) : e.target.value)} onPaste={onPaste} placeholder={placeholder} className="w-full p-2 bg-surface-accent border border-border rounded-lg text-text-primary focus:ring-2 focus:ring-primary focus:outline-none" />
     </div>
   );
 
@@ -328,9 +329,32 @@ const ImageEditor: React.FC<{ props: ImageProps; onChange: (p: Partial<ImageProp
         }
     };
 
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        const items = e.clipboardData.items;
+        for (const item of Array.from(items)) {
+            if (item.kind === 'file' && item.type.startsWith('image/')) {
+                const file = item.getAsFile();
+                if (file) {
+                    e.preventDefault();
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        onChange({ src: reader.result as string });
+                    };
+                    reader.readAsDataURL(file);
+                    return;
+                }
+            }
+        }
+    };
+
     return (
         <div className="space-y-3">
-            <NonResponsiveInputField label="Source URL" value={props.src} onChange={src => onChange({ src })} />
+            <NonResponsiveInputField 
+                label="Source URL or Paste Image" 
+                value={props.src} 
+                onChange={src => onChange({ src })}
+                onPaste={handlePaste} 
+            />
             
             <div>
                  <label className="block text-sm font-medium text-text-secondary mb-1">Or Upload Image</label>

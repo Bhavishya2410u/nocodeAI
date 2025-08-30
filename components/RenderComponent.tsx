@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { CanvasComponent, Responsive, Viewport } from '../types';
 import { DeleteIcon, ImageIcon } from './icons/EditorIcons';
@@ -95,12 +96,13 @@ export const RenderComponent: React.FC<RenderComponentProps> = ({
                 return <button style={styles} className={`font-semibold transition-transform duration-150 active:scale-95 text-sm`}>{props.text}</button>;
             case 'Input':
                 return (
-                    <div style={{width: getResponsiveValue(props.width)}}>
+                    <div style={{width: getResponsiveValue(props.width)}} className="pointer-events-none">
                         <label className="block text-sm font-medium text-text-secondary mb-1.5">{props.label}</label>
                         <input 
                             type={props.type}
                             placeholder={props.placeholder}
                             className="w-full p-2 bg-surface-accent border border-border rounded-lg text-text-primary focus:ring-2 focus:ring-primary focus:outline-none"
+                            readOnly
                         />
                     </div>
                 );
