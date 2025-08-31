@@ -1,21 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import type { CanvasComponent } from '../types';
 
-// Safely get the API key without crashing the app on load.
-const getApiKey = (): string | undefined => {
-    try {
-        // In a browser environment, a polyfill is expected to place `process.env` on the window object.
-        return (window as any).process?.env?.API_KEY;
-    } catch (e) {
-        console.error("Could not access process.env.API_KEY", e);
-        return undefined;
-    }
-};
-
-const apiKey = getApiKey();
-
-// Initialize AI client only if the key exists. Functions will check for the client's existence.
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// The API key is expected to be available in the environment variables.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
 function formatComponentsForPrompt(components: CanvasComponent[], indentLevel = 0): string {
@@ -46,9 +33,6 @@ function formatComponentsForPrompt(components: CanvasComponent[], indentLevel = 
 }
 
 export async function generateFrontendCode(components: CanvasComponent[]): Promise<string> {
-    if (!ai) {
-      throw new Error("Gemini AI client is not initialized. Please configure your API_KEY.");
-    }
     const componentPrompt = formatComponentsForPrompt(components);
     const fullPrompt = `
       You are an expert frontend developer specializing in creating pixel-perfect, **responsive** UIs with HTML and Tailwind CSS.
@@ -94,15 +78,15 @@ export async function generateFrontendCode(components: CanvasComponent[]): Promi
         return cleanedCode;
     } catch (error) {
         console.error("Error generating frontend code:", error);
+        if (error instanceof Error && /API key/i.test(error.message)) {
+            throw new Error("API Key is invalid or missing. Please check your environment configuration.");
+        }
         throw new Error("Failed to generate frontend code. Please check the console for details.");
     }
 }
 
 
 export async function generateBackendCode(prompt: string): Promise<string> {
-    if (!ai) {
-      throw new Error("Gemini AI client is not initialized. Please configure your API_KEY.");
-    }
     const fullPrompt = `
       You are an expert backend developer specializing in Node.js, Express, and Prisma.
       Based on the user's request, generate a complete, production-ready 'server.js' file and a 'schema.prisma' file.
@@ -177,6 +161,9 @@ export async function generateBackendCode(prompt: string): Promise<string> {
     } catch (error)
     {
         console.error("Error generating backend code:", error);
+        if (error instanceof Error && /API key/i.test(error.message)) {
+            throw new Error("API Key is invalid or missing. Please check your environment configuration.");
+        }
         throw new Error("Failed to generate backend code. Please check the console for details.");
     }
 }
